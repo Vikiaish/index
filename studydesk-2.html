@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="StudyDesk"/>
+  <meta name="theme-color" content="#080808"/>
+  <title>StudyDesk</title>
+  <script>
+    const manifest={name:"StudyDesk",short_name:"StudyDesk",description:"Daily study tracker",start_url:".",display:"standalone",background_color:"#080808",theme_color:"#080808",orientation:"portrait",icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23080808'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-size='100'%3E📈%3C/text%3E%3C/svg%3E",sizes:"192x192",type:"image/svg+xml"},{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23080808'/%3E%3Ctext x='256' y='360' text-anchor='middle' font-size='280'%3E📈%3C/text%3E%3C/svg%3E",sizes:"512x512",type:"image/svg+xml"}]};
+    const b=new Blob([JSON.stringify(manifest)],{type:"application/json"});
+    const l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(b);document.head.appendChild(l);
+  </script>
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%23080808'/%3E%3Ctext x='96' y='130' text-anchor='middle' font-size='100'%3E📈%3C/text%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080808;--bg1:#0f0f0f;--bg2:#141414;--bg3:#1c1c1c;--bg4:#222;
+      --border:#1e1e1e;--border2:#333;--text:#f0f0f0;--text2:#888;--text3:#555;
+      --font:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
+      --st:env(safe-area-inset-top);--sb:env(safe-area-inset-bottom);
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden}
+    #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+    ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:2px}
+    .header{position:sticky;top:0;z-index:100;background:rgba(8,8,8,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:calc(14px + var(--st)) 20px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .logo{font-size:16px;font-weight:800;letter-spacing:3px;color:#fff}
+    .logo-sub{font-size:9px;color:#444;margin-top:2px;font-family:var(--mono);letter-spacing:1px}
+    .nav{background:var(--bg1);border-bottom:1px solid var(--border);display:flex;gap:2px;padding:8px 12px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+    .nav::-webkit-scrollbar{display:none}
+    .nb{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:700;font-family:var(--font);white-space:nowrap;letter-spacing:.5px;background:transparent;color:var(--text3);transition:all .2s}
+    .nb.active{background:var(--bg4);color:var(--text);border:1px solid var(--border2)}
+    .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .page{padding:14px;max-width:700px;margin:0 auto;display:none}
+    .page.active{display:block;animation:fi .2s ease}
+    @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+    .card{background:var(--bg1);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:12px}
+    .ct{font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:14px}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+    .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+    @media(max-width:480px){.g4{grid-template-columns:1fr 1fr}}
+    .sc{background:var(--bg2);border-radius:12px;padding:14px;border-top:2px solid}
+    .sn{font-family:var(--mono);font-size:22px;font-weight:700;margin:4px 0}
+    .sl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px}
+    input,select,textarea{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--border);font-size:13px;margin-bottom:10px;background:var(--bg2);color:var(--text);font-family:var(--font);outline:none;transition:border-color .2s;-webkit-appearance:none}
+    input:focus,select:focus{border-color:#444}
+    input::placeholder{color:var(--text3)}
+    option{background:#141414;color:#f0f0f0}
+    input[type=number]{-moz-appearance:textfield}
+    input[type=number]::-webkit-inner-spin-button{display:none}
+    input[type=checkbox]{width:auto;margin:0;cursor:pointer}
+    .btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .15s;letter-spacing:.3px}
+    .bw{background:#fff;color:#000}
+    .bg{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+    .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase}
+    .track{height:4px;border-radius:2px;background:var(--bg3);overflow:hidden}
+    .fill{height:100%;border-radius:2px;transition:width .5s ease}
+    .pi{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+    .li{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)}
+    .tc{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:8px;cursor:pointer;transition:all .15s;font-size:12px;border:1px solid var(--border);background:var(--bg2)}
+    .tc:hover{background:var(--bg3)}
+    .tcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:7px}
+    .tn{font-family:var(--mono);font-size:44px;font-weight:700;letter-spacing:-3px;line-height:1}
+    .pulse{animation:pulse 2s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+    .bars{display:flex;align-items:flex-end;gap:5px;height:60px}
+    .bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+    .bbar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .4s ease}
+    .blbl{font-size:9px;color:var(--text3);font-family:var(--mono)}
+    .dw{position:relative}.dl{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+    .pp{padding:6px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font);font-weight:600;transition:all .15s;border:1px solid var(--border);background:#111;color:#555}
+    .rb{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .rbb{display:flex;align-items:center;justify-content:space-between}
+    /* Punishment badge */
+    .punish{background:#ef444418;border:1px solid #ef444450;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+    /* Grow section */
+    .grow-card{border-radius:12px;padding:16px;margin-bottom:10px;border-left:3px solid}
+    /* Modal */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;backdrop-filter:blur(4px)}
+    .modal-bg.open{display:flex;align-items:flex-end;justify-content:center}
+    .modal{background:var(--bg2);border-radius:16px 16px 0 0;padding:22px;width:100%;max-width:500px;border-top:1px solid var(--border2);padding-bottom:calc(22px + var(--sb))}
+    .modal h3{font-size:16px;font-weight:800;margin-bottom:16px}
+    .modal-close{float:right;background:none;border:none;color:#666;font-size:22px;cursor:pointer;margin-top:-4px}
+    /* Install banner */
+    #ib{display:none;position:fixed;bottom:calc(16px + var(--sb));left:16px;right:16px;background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:14px 16px;z-index:998;box-shadow:0 8px 32px rgba(0,0,0,.8)}
+    #ib.show{display:flex;align-items:center;gap:12px}
+    .ibt{flex:1;font-size:13px;color:#ccc}
+    .ibt b{color:#fff;display:block;margin-bottom:2px}
+    /* Custom task color dot */
+    .cdot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    /* Streak */
+    .streak-fire{font-size:28px;line-height:1}
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="logo">STUDYDESK</div>
+      <div class="logo-sub" id="hdate"></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-family:var(--mono);font-size:20px;font-weight:700" id="hdmins">0<span style="font-size:13px;color:#333">/90m</span></div>
+      <div style="font-size:9px;color:#444;letter-spacing:1.5px;text-transform:uppercase">daily target</div>
+    </div>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div id="punish-banner"></div>
+      <div class="g4" id="stats-grid"></div>
+      <div class="card">
+        <div class="ct">Daily Progress</div>
+        <div class="rb" style="gap:18px">
+          <div id="main-donut"></div>
+          <div style="flex:1;min-width:140px">
+            <div class="rbb" style="margin-bottom:7px">
+              <span style="font-size:13px;color:#666" id="prog-lbl"></span>
+              <span style="font-family:var(--mono);font-size:13px" id="prog-pct"></span>
+            </div>
+            <div class="track"><div class="fill" id="prog-bar"></div></div>
+            <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px" id="today-tags"></div>
+          </div>
+        </div>
+      </div>
+      <div class="g4" id="cat-rings"></div>
+      <div class="card">
+        <div class="ct" id="plan-mini-t">Today's Plan</div>
+        <div id="plan-mini"></div>
+      </div>
+      <div class="card">
+        <div class="ct">Study Timer</div>
+        <div class="rb" style="gap:14px">
+          <select id="timer-cat" style="width:120px;margin:0"></select>
+          <div class="tn" id="timer-disp">00:00</div>
+          <button class="btn bw" id="timer-btn" onclick="timerToggle()">▶ Start</button>
+          <button class="btn bg" id="timer-reset" onclick="timerReset()" style="display:none">Reset</button>
+        </div>
+      </div>
+      <div class="card"><div class="ct">Last 7 Days</div><div class="bars" id="main-bars"></div></div>
+    </div>
+
+    <!-- LOG STUDY -->
+    <div class="page" id="page-log">
+      <div class="card">
+        <div class="ct">Log a Session</div>
+        <select id="log-cat" onchange="onLogCatChange()"></select>
+        <select id="log-topic"><option value="">— Select Topic —</option></select>
+        <input id="log-notes" placeholder="Notes (optional)"/>
+        <div class="rb" style="margin-bottom:12px">
+          <span style="font-size:13px;color:#555;white-space:nowrap">Duration (mins)</span>
+          <input type="number" id="log-dur" value="30" min="1" style="width:80px;margin:0"/>
+        </div>
+        <button class="btn bw" onclick="addLog()">+ Add Log</button>
+      </div>
+      <div class="card"><div class="ct">Recent Sessions</div><div id="recent-logs"></div></div>
+    </div>
+
+    <!-- TOPICS -->
+    <div class="page" id="page-topics">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn" style="flex:1;background:#1a1a1a;color:#888;border:1px dashed #333;font-size:12px;padding:10px" onclick="switchTab('custom')">➕ Add New Section</button>
+      </div>
+      <div id="topics-content"></div>
+    </div>
+
+    <!-- TODAY'S PLAN -->
+    <div class="page" id="page-plan">
+      <div class="card">
+        <div class="ct">Build Today's Plan</div>
+        <div class="rb" style="margin-bottom:14px;gap:6px" id="plan-cat-btns"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px" id="plan-pills"></div>
+      </div>
+      <div class="card">
+        <div class="rbb" style="margin-bottom:14px">
+          <div class="ct" style="margin:0" id="plan-cl-t">Checklist</div>
+          <div class="track" style="width:90px"><div class="fill" id="plan-pf" style="background:#34d399"></div></div>
+        </div>
+        <div id="plan-cl"></div>
+      </div>
+    </div>
+
+    <!-- CUSTOM TASKS -->
+    <div class="page" id="page-custom">
+      <div class="card">
+        <div class="ct">Add Custom Task / Category</div>
+        <input id="ct-name" placeholder="Task name (e.g. Reading, System Design)"/>
+        <input id="ct-emoji" placeholder="Emoji icon (e.g. 📖)" style="width:90px;display:inline-block;margin-right:10px"/>
+        <div style="margin-bottom:10px">
+          <div style="font-size:12px;color:#555;margin-bottom:8px">Pick color:</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="color-picker"></div>
+        </div>
+        <button class="btn bw" onclick="addCustomTask()">+ Add Task</button>
+      </div>
+      <div class="card"><div class="ct">My Custom Tasks</div><div id="custom-task-list"></div></div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="page" id="page-jobs">
+      <div class="card">
+        <div class="ct">Log Application</div>
+        <input id="job-company" placeholder="Company Name *"/>
+        <input id="job-role" placeholder="Role / Position *"/>
+        <input id="job-link" placeholder="Job Link (optional)"/>
+        <select id="job-status">
+          <option>Applied</option><option>OA Received</option>
+          <option>Interview Scheduled</option><option>Rejected</option><option>Offer</option>
+        </select>
+        <button class="btn" style="background:#34d399;color:#000" onclick="addJob()">+ Log Application</button>
+      </div>
+      <div class="g2">
+        <div class="sc" style="border-top-color:#34d399"><div class="sl">Total Applied</div><div class="sn" style="color:#34d399" id="job-total">0</div></div>
+        <div class="sc" style="border-top-color:#38bdf8"><div class="sl">This Week</div><div class="sn" style="color:#38bdf8" id="job-week">0</div></div>
+      </div>
+      <div class="card"><div class="ct">Applications</div><div id="job-list"></div></div>
+    </div>
+
+    <!-- GROW -->
+    <div class="page" id="page-grow">
+      <div class="card" style="background:linear-gradient(135deg,#1a0f0f,#0f0f1a);border-color:#333">
+        <div class="ct">📊 Where You Need to Grow</div>
+        <div id="grow-content"></div>
+      </div>
+      <div class="card">
+        <div class="ct">🔥 Streak</div>
+        <div id="streak-content"></div>
+      </div>
+      <div class="card"><div class="ct">Weak Areas (least studied)</div><div id="weak-areas"></div></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="g2" id="hist-cats" style="margin-bottom:12px"></div>
+      <div class="card"><div class="ct">All Sessions</div><div id="all-logs"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Custom Task Modal (reuse for editing) -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAllModals()">×</button>
+    <h3 id="modal-title">Custom Task</h3>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Install Banner -->
+<div id="ib">
+  <span style="font-size:26px">📲</span>
+  <div class="ibt"><b>Add to Home Screen</b>Install StudyDesk as an app</div>
+  <button class="btn bw" id="ib-btn" style="font-size:12px;padding:8px 14px">Install</button>
+  <button onclick="document.getElementById('ib').classList.remove('show')" style="background:none;border:none;color:#555;cursor:pointer;font-size:20px;padding:0 4px">×</button>
+</div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────────
+const BUILTIN_TOPICS = {
+  dsa:    {label:"DSA",     icon:"⚡",color:"#f97316",glow:"rgba(249,115,22,.3)",  topics:["Arrays & Strings","Hashing & Maps","Two Pointers","Sliding Window","Stack & Queue","Linked List","Binary Search","Trees (BFS/DFS)","Graphs","Dynamic Programming","Sorting Algorithms","Recursion & Backtracking"],builtin:true},
+  python: {label:"Python",  icon:"🐍",color:"#38bdf8",glow:"rgba(56,189,248,.3)",  topics:["OOP Concepts","File I/O","Decorators","Generators & Iterators","List/Dict Comprehensions","Error Handling","Modules & Packages","Regex","Multithreading","REST APIs","Context Managers","Type Hints"],builtin:true},
+  ai:     {label:"AI / ML", icon:"🤖",color:"#a78bfa",glow:"rgba(167,139,250,.3)", topics:["NumPy & Pandas","Matplotlib & Seaborn","Scikit-learn Basics","Linear & Logistic Regression","Decision Trees & RF","Neural Network Basics","NLP Fundamentals","Model Evaluation","Feature Engineering","Clustering (K-Means)","Deep Learning Intro","End-to-End Project"],builtin:true},
+  jobs:   {label:"Jobs",    icon:"💼",color:"#34d399",glow:"rgba(52,211,153,.3)",  topics:["Daily Application"],builtin:true}
+};
+const SC = {Applied:"#38bdf8","OA Received":"#f59e0b","Interview Scheduled":"#a78bfa",Rejected:"#ef4444",Offer:"#34d399"};
+const COLORS = ["#f97316","#38bdf8","#a78bfa","#34d399","#f59e0b","#ec4899","#06b6d4","#84cc16","#ef4444","#8b5cf6"];
+const TARGET = 90;
+const KEY = "studydesk_v3";
+
+// ─── STATE ────────────────────────────────────────────────────────────
+function defaultData() {
+  return {
+    logs:[], topicStatus:{}, todayPlan:[], jobLogs:[],
+    customCategories:{}, // {key: {label,icon,color,topics:[]}}
+    customTasks:{},
+    extraTopics:{},      // {catKey: ["topic1","topic2"]} — user-added topics for ANY section incl. builtins
+    missedMins:0,
+    lastDate: today()
+  };
+}
+
+function load() {
+  try {
+    const r = localStorage.getItem(KEY);
+    if(r) {
+      const d = JSON.parse(r);
+      if(!d.customCategories) d.customCategories = {};
+      if(!d.customTasks) d.customTasks = {};
+      if(!d.extraTopics) d.extraTopics = {};
+      if(d.missedMins === undefined) d.missedMins = 0;
+      if(!d.lastDate) d.lastDate = today();
+      return d;
+    }
+  } catch(e) { console.error(e); }
+  return defaultData();
+}
+
+function save(d) {
+  try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e) { console.error(e); }
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+function pad(n) { return String(n).padStart(2,"0"); }
+function fmt(s) { const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60; return h>0?`${h}:${pad(m)}:${pad(sc)}`:`${pad(m)}:${pad(sc)}`; }
+function el(id) { return document.getElementById(id); }
+
+let data = load();
+let timerSecs=0, timerOn=false, timerInterval=null, planCat="dsa", activeTab="dashboard";
+let selectedColor = COLORS[0];
+
+// ─── PUNISHMENT CHECK ─────────────────────────────────────────────────
+function checkPunishment() {
+  const d = data;
+  const lastDate = d.lastDate || today();
+  const t = today();
+  if(lastDate !== t) {
+    // New day — check if yesterday's target was missed
+    const yLogs = d.logs.filter(l => l.date === lastDate);
+    const yMins = yLogs.reduce((a,b) => a+(b.duration||0), 0);
+    if(yMins < TARGET) {
+      const missed = TARGET - yMins;
+      d.missedMins = (d.missedMins || 0) + missed;
+    }
+    d.lastDate = t;
+    save(d);
+  }
+}
+checkPunishment();
+
+// ─── ALL CATEGORIES (builtin + custom + extra topics) ────────────────
+function allCats() {
+  const base = { ...BUILTIN_TOPICS, ...data.customCategories };
+  const extra = data.extraTopics || {};
+  const result = {};
+  for(const [k, cat] of Object.entries(base)) {
+    result[k] = { ...cat, topics: [...cat.topics, ...(extra[k] || [])] };
+  }
+  return result;
+}
+function extraTopicsFor(catKey) { return (data.extraTopics||{})[catKey]||[]; }
+
+// ─── TABS ─────────────────────────────────────────────────────────────
+const TABS = ["dashboard","log","topics","plan","custom","jobs","grow","history"];
+const TAB_LABELS = {dashboard:"Dashboard",log:"Log Study",topics:"Topics",plan:"Today's Plan",custom:"+ My Tasks",jobs:"Jobs",grow:"Grow 📊",history:"History"};
+
+function initNav() {
+  const nav = el("nav");
+  nav.innerHTML = "";
+  TABS.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = `nb ${t===activeTab?"active":""}`;
+    btn.textContent = TAB_LABELS[t];
+    btn.onclick = () => switchTab(t);
+    nav.appendChild(btn);
+  });
+}
+
+function switchTab(t) {
+  activeTab = t;
+  document.querySelectorAll(".nb").forEach((b,i) => b.classList.toggle("active", TABS[i]===t));
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  el(`page-${t}`).classList.add("active");
+  render();
+}
+
+// ─── DONUT ────────────────────────────────────────────────────────────
+function donutHTML(done, total, color, size=72) {
+  const pct = total===0?0:done/total;
+  const r=28, circ=2*Math.PI*r, dash=pct*circ;
+  return `<div class="dw" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+      <circle cx="40" cy="40" r="${r}" fill="none" stroke="#1a1a1a" stroke-width="9"/>
+      <circle cx="40" cy="40" r="${r}" fill="none" stroke="${color}" stroke-width="9"
+        stroke-dasharray="${dash} ${circ}" stroke-linecap="round"
+        style="filter:drop-shadow(0 0 5px ${color}90);transition:stroke-dasharray .5s"/>
+    </svg>
+    <div class="dl" style="font-size:${size<70?11:13}px;color:${color}">${Math.round(pct*100)}%</div>
+  </div>`;
+}
+
+// ─── BARS ─────────────────────────────────────────────────────────────
+function renderBarsEl(container, logs, color) {
+  const days=[];
+  for(let i=6;i>=0;i--) {
+    const d=new Date(); d.setDate(d.getDate()-i);
+    const ds=d.toISOString().slice(0,10);
+    const mins=logs.filter(l=>l.date===ds).reduce((a,b)=>a+(b.duration||0),0);
+    days.push({label:d.toLocaleDateString("en",{weekday:"short"})[0],mins});
+  }
+  const max=Math.max(...days.map(d=>d.mins),30);
+  container.innerHTML=days.map(d=>`<div class="bcol">
+    <div class="bbar" style="height:${Math.max(3,(d.mins/max)*50)}px;background:${d.mins>0?color:"#1a1a1a"};${d.mins>0?`box-shadow:0 0 7px ${color}50`:""}"></div>
+    <span class="blbl">${d.label}</span>
+  </div>`).join("");
+}
+
+// ─── MAIN RENDER ─────────────────────────────────────────────────────
+function render() {
+  const todayLogs = data.logs.filter(l => l.date===today());
+  const todayMins = todayLogs.reduce((a,b) => a+(b.duration||0), 0);
+  const effectiveTarget = TARGET + (data.missedMins || 0);
+  const planDone = data.todayPlan.filter(p=>p.done).length;
+  const cats = allCats();
+
+  // Header
+  el("hdate").textContent = new Date().toLocaleDateString("en",{weekday:"long",day:"numeric",month:"short"}).toUpperCase();
+  el("hdmins").innerHTML = `${todayMins}<span style="font-size:13px;color:#333">/${effectiveTarget}m</span>`;
+  el("hdmins").style.color = todayMins>=effectiveTarget?"#34d399":"#f97316";
+
+  if(activeTab==="dashboard") renderDashboard(todayLogs, todayMins, effectiveTarget, planDone, cats);
+  if(activeTab==="log")       renderLog(cats);
+  if(activeTab==="topics")    renderTopics(cats);
+  if(activeTab==="plan")      renderPlan(planDone, cats);
+  if(activeTab==="custom")    renderCustom();
+  if(activeTab==="jobs")      renderJobs();
+  if(activeTab==="grow")      renderGrow(cats);
+  if(activeTab==="history")   renderHistory(cats);
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────
+function renderDashboard(todayLogs, todayMins, effectiveTarget, planDone, cats) {
+  const todayJobs = data.jobLogs.filter(j=>j.date===today()).length;
+  const col = todayMins>=effectiveTarget?"#34d399":"#f97316";
+  const missed = data.missedMins || 0;
+
+  // Punishment banner
+  el("punish-banner").innerHTML = missed > 0
+    ? `<div class="punish">
+        <span style="font-size:22px">🔥</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:#ef4444">Punishment: +${missed}m from yesterday!</div>
+          <div style="font-size:11px;color:#666;margin-top:2px">You missed ${missed} mins yesterday. Today's target is ${effectiveTarget}m</div>
+        </div>
+        <button onclick="clearPunishment()" style="background:none;border:1px solid #333;border-radius:6px;color:#555;cursor:pointer;font-size:10px;padding:4px 8px;font-family:var(--font)">Dismiss</button>
+      </div>` : "";
+
+  // Stats
+  el("stats-grid").innerHTML = [
+    {label:"Today",    val:`${todayMins}m`, color:"#f97316", sub:`of ${effectiveTarget}m`},
+    {label:"Plan",     val:`${planDone}/${data.todayPlan.length}`, color:"#38bdf8", sub:"tasks done"},
+    {label:"Jobs",     val:todayJobs, color:"#34d399", sub:"today"},
+    {label:"Sessions", val:data.logs.length, color:"#a78bfa", sub:"all time"},
+  ].map(s=>`<div class="sc" style="border-top-color:${s.color}">
+    <div class="sl">${s.label}</div>
+    <div class="sn" style="color:${s.color}">${s.val}</div>
+    <div style="font-size:10px;color:#444">${s.sub}</div>
+  </div>`).join("");
+
+  // Progress
+  el("main-donut").innerHTML = donutHTML(Math.min(todayMins,effectiveTarget),effectiveTarget,col,80);
+  el("prog-lbl").textContent = todayMins>=effectiveTarget ? "🎉 Target complete!" : `${effectiveTarget-todayMins}m remaining`;
+  el("prog-lbl").style.color = todayMins>=effectiveTarget?"#34d399":"#666";
+  el("prog-pct").textContent = Math.min(100,Math.round((todayMins/effectiveTarget)*100))+"%";
+  el("prog-pct").style.color = col;
+  const pb=el("prog-bar"); pb.style.width=`${Math.min(100,(todayMins/effectiveTarget)*100)}%`; pb.style.background=col; pb.style.boxShadow=`0 0 10px ${col}80`;
+  el("today-tags").innerHTML = todayLogs.length===0
+    ? `<span style="font-size:12px;color:#333">No sessions yet today</span>`
+    : todayLogs.slice(0,4).map(l=>`<span class="tag" style="background:${cats[l.category]?.color||"#888"}18;color:${cats[l.category]?.color||"#888"}">${cats[l.category]?.label||l.category} · ${l.duration}m</span>`).join("");
+
+  // Cat rings
+  el("cat-rings").innerHTML = Object.entries(cats).map(([k,cat])=>{
+    const total = cat.topics.length;
+    const done = total > 0 ? cat.topics.filter(t=>data.topicStatus[`${k}::${t}`]).length : 0;
+    const mins = data.logs.filter(l=>l.category===k).reduce((a,b)=>a+(b.duration||0),0);
+    return `<div class="card" style="padding:12px;margin:0;text-align:center">
+      <div style="display:flex;justify-content:center;margin-bottom:8px">${donutHTML(done,total||1,cat.color,58)}</div>
+      <div style="font-weight:800;font-size:11px;color:${cat.color}">${cat.icon} ${cat.label}</div>
+      <div style="font-size:10px;color:#444;margin-top:2px">${done}/${total} topics</div>
+      <div style="font-family:var(--mono);font-size:10px;color:#555;margin-top:1px">${mins}m</div>
+    </div>`;
+  }).join("");
+
+  // Plan mini
+  el("plan-mini-t").textContent = `Today's Plan — ${planDone}/${data.todayPlan.length} done`;
+  el("plan-mini").innerHTML = data.todayPlan.length===0
+    ? `<p style="color:#333;font-size:13px">No plan set. Go to "Today's Plan" →</p>`
+    : data.todayPlan.map(p=>`<div class="pi">
+        <input type="checkbox" ${p.done?"checked":""} onchange="togglePlan('${p.key}')" style="accent-color:${cats[p.cat]?.color||"#888"}"/>
+        <span class="tag" style="background:${cats[p.cat]?.color||"#888"}18;color:${cats[p.cat]?.color||"#888"}">${cats[p.cat]?.icon||"📌"}</span>
+        <span style="font-size:13px;flex:1;text-decoration:${p.done?"line-through":"none"};color:${p.done?"#333":"#e0e0e0"}">${p.topic}</span>
+      </div>`).join("");
+
+  // Timer
+  if(!timerOn) {
+    el("timer-cat").innerHTML = Object.entries(cats).map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join("");
+  }
+  renderBarsEl(el("main-bars"), data.logs, "#a78bfa");
+}
+
+// ─── LOG ──────────────────────────────────────────────────────────────
+function renderLog(cats) {
+  const lc = el("log-cat");
+  lc.innerHTML = Object.entries(cats).filter(([k])=>k!=="jobs").map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join("");
+  onLogCatChange();
+  const items = data.logs.slice(0,25);
+  el("recent-logs").innerHTML = items.length===0 ? `<p style="color:#333;font-size:13px">Nothing logged yet.</p>`
+    : items.map(l=>`<div class="li">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span class="tag" style="background:${cats[l.category]?.color||"#888"}18;color:${cats[l.category]?.color||"#888"}">${cats[l.category]?.label||l.category}</span>
+          <div><div style="font-size:13px;font-weight:600">${l.topic}</div>${l.notes?`<div style="font-size:11px;color:#555">${l.notes}</div>`:""}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:13px;color:${cats[l.category]?.color||"#888"}">${l.duration}m</div>
+          <div style="font-size:11px;color:#444">${l.date}</div>
+        </div>
+      </div>`).join("");
+}
+
+function onLogCatChange() {
+  const cat = el("log-cat")?.value || "dsa";
+  const tp = el("log-topic"); if(!tp) return;
+  const cats = allCats();
+  tp.innerHTML = `<option value="">— Select Topic —</option>`+(cats[cat]?.topics||[]).map(t=>`<option value="${t}">${t}</option>`).join("");
+}
+
+// ─── TOPICS ───────────────────────────────────────────────────────────
+function renderTopics(cats) {
+  el("topics-content").innerHTML = Object.entries(cats).filter(([k])=>k!=="jobs").map(([key,cat])=>{
+    const builtinTopics = BUILTIN_TOPICS[key]?.topics || (data.customCategories[key]?.topics || []);
+    const userTopics = extraTopicsFor(key);
+    const done = cat.topics.filter(t=>data.topicStatus[`${key}::${t}`]).length;
+    const pct = cat.topics.length > 0 ? (done/cat.topics.length)*100 : 0;
+    return `<div class="card">
+      <div class="rbb" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:18px">${cat.icon}</span>
+          <span style="font-weight:800;font-size:14px;color:${cat.color}">${cat.label}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px">
+          <div class="track" style="width:70px"><div class="fill" style="width:${pct}%;background:${cat.color};box-shadow:0 0 7px ${cat.color}80"></div></div>
+          <span style="font-family:var(--mono);font-size:11px;color:#555">${done}/${cat.topics.length}</span>
+        </div>
+      </div>
+      <div class="tcg">
+        ${builtinTopics.map(topic=>{
+          const k=`${key}::${topic}`, isDone=data.topicStatus[k];
+          return `<div class="tc" style="background:${isDone?cat.color+"15":"var(--bg2)"};border-color:${isDone?cat.color+"50":"var(--border)"}" onclick="markTopic('${key}','${esc(topic)}')">
+            <span style="font-size:13px;color:${isDone?cat.color:"#333"}">${isDone?"✓":"○"}</span>
+            <span style="flex:1;font-size:11px;font-weight:${isDone?700:400};color:${isDone?cat.color:"#888"}">${topic}</span>
+            <button onclick="event.stopPropagation();addPlan('${key}','${esc(topic)}')" style="font-size:9px;padding:2px 6px;background:#111;border:1px solid #222;border-radius:4px;cursor:pointer;color:#555;font-family:var(--font);font-weight:700">PLAN</button>
+          </div>`;
+        }).join("")}
+        ${userTopics.map(topic=>{
+          const k=`${key}::${topic}`, isDone=data.topicStatus[k];
+          return `<div class="tc" style="background:${isDone?cat.color+"15":"var(--bg2)"};border-color:${isDone?cat.color+"40":"#2a2a2a"};position:relative" onclick="markTopic('${key}','${esc(topic)}')">
+            <span style="font-size:11px;color:${cat.color};font-weight:700;font-family:var(--mono)">+</span>
+            <span style="font-size:13px;color:${isDone?cat.color:"#333"}">${isDone?"✓":"○"}</span>
+            <span style="flex:1;font-size:11px;font-weight:${isDone?700:400};color:${isDone?cat.color:"#aaa"}">${topic}</span>
+            <button onclick="event.stopPropagation();addPlan('${key}','${esc(topic)}')" style="font-size:9px;padding:2px 6px;background:#111;border:1px solid #222;border-radius:4px;cursor:pointer;color:#555;font-family:var(--font);font-weight:700">PLAN</button>
+            <button onclick="event.stopPropagation();deleteExtraTopic('${key}','${esc(topic)}')" style="font-size:12px;padding:1px 5px;background:none;border:none;cursor:pointer;color:#444;line-height:1" title="Remove">✕</button>
+          </div>`;
+        }).join("")}
+        <button onclick="showAddTopicModal('${key}')" style="padding:10px;border-radius:8px;border:1px dashed ${cat.color}40;background:transparent;color:${cat.color};cursor:pointer;font-size:12px;font-family:var(--font);width:100%;font-weight:700;letter-spacing:.5px;transition:all .15s" onmouseover="this.style.background='${cat.color}10'" onmouseout="this.style.background='transparent'">+ Add Topic to ${cat.label}</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ─── PLAN ─────────────────────────────────────────────────────────────
+function renderPlan(planDone, cats) {
+  el("plan-cat-btns").innerHTML = Object.entries(cats).filter(([k])=>k!=="jobs").map(([k,v])=>`
+    <button class="pp" style="background:${planCat===k?v.color:"#111"};color:${planCat===k?"#000":"#555"};border-color:${planCat===k?v.color:"var(--border)"};box-shadow:${planCat===k?`0 0 12px ${v.glow}`:"none"}" onclick="setPlanCat('${k}')">${v.icon} ${v.label}</button>`).join("");
+  const catTopics = cats[planCat]?.topics || [];
+  el("plan-pills").innerHTML = catTopics.map(topic=>{
+    const k=`${planCat}::${topic}`, inPlan=data.todayPlan.find(p=>p.key===k);
+    return `<button style="padding:7px 13px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font);font-weight:600;background:${inPlan?cats[planCat].color+"20":"#111"};color:${inPlan?cats[planCat].color:"#555"};border:1px solid ${inPlan?cats[planCat].color+"60":"#1f1f1f"};transition:all .15s" onclick="addPlan('${planCat}','${esc(topic)}')">${inPlan?"✓ ":"+ "}${topic}</button>`;
+  }).join("");
+  const total = data.todayPlan.length;
+  el("plan-cl-t").textContent = `Checklist — ${planDone}/${total}`;
+  el("plan-pf").style.width = total ? `${(planDone/total)*100}%` : "0%";
+  el("plan-cl").innerHTML = total===0 ? `<p style="color:#333;font-size:13px">Pick topics above.</p>`
+    : data.todayPlan.map(p=>`<div class="pi">
+        <input type="checkbox" ${p.done?"checked":""} onchange="togglePlan('${p.key}')" style="accent-color:${cats[p.cat]?.color||"#888"}"/>
+        <span class="tag" style="background:${cats[p.cat]?.color||"#888"}18;color:${cats[p.cat]?.color||"#888"}">${cats[p.cat]?.icon||"📌"}</span>
+        <span style="flex:1;font-size:13px;text-decoration:${p.done?"line-through":"none"};color:${p.done?"#333":"#e0e0e0"}">${p.topic}</span>
+        <button onclick="removePlan('${p.key}')" style="background:none;border:none;cursor:pointer;color:#2a2a2a;font-size:20px;line-height:1;padding:0 4px">×</button>
+      </div>`).join("");
+}
+
+// ─── CUSTOM TASKS ─────────────────────────────────────────────────────
+function renderCustom() {
+  // Color picker
+  el("color-picker").innerHTML = COLORS.map(c=>`<div onclick="selectColor('${c}')" style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${selectedColor===c?"#fff":"transparent"};transition:border .15s"></div>`).join("");
+
+  // List
+  const cats = data.customCategories || {};
+  const keys = Object.keys(cats);
+  el("custom-task-list").innerHTML = keys.length===0
+    ? `<p style="color:#333;font-size:13px">No custom tasks yet. Add one above!</p>`
+    : keys.map(k=>{
+        const cat = cats[k];
+        const done = cat.topics.filter(t=>data.topicStatus[`${k}::${t}`]).length;
+        const mins = data.logs.filter(l=>l.category===k).reduce((a,b)=>a+(b.duration||0),0);
+        return `<div class="li">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="cdot" style="background:${cat.color}"></div>
+            <div>
+              <div style="font-weight:700;font-size:14px;color:${cat.color}">${cat.icon} ${cat.label}</div>
+              <div style="font-size:11px;color:#555">${cat.topics.length} topics · ${done} done · ${mins}m studied</div>
+            </div>
+          </div>
+          <button onclick="deleteCustomCat('${k}')" style="background:none;border:1px solid #2a2a2a;border-radius:6px;color:#444;cursor:pointer;font-size:11px;padding:4px 8px">Delete</button>
+        </div>`;
+      }).join("");
+}
+
+function selectColor(c) { selectedColor=c; renderCustom(); }
+
+function addCustomTask() {
+  const name = el("ct-name").value.trim();
+  const emoji = el("ct-emoji").value.trim() || "📌";
+  if(!name) { alert("Enter a task name"); return; }
+  const key = "custom_" + Date.now();
+  data.customCategories[key] = { label:name, icon:emoji, color:selectedColor, glow:`${selectedColor}50`, topics:[], builtin:false };
+  save(data);
+  el("ct-name").value=""; el("ct-emoji").value="";
+  renderCustom();
+}
+
+function deleteCustomCat(k) {
+  if(!confirm(`Delete "${data.customCategories[k]?.label}"? This can't be undone.`)) return;
+  delete data.customCategories[k];
+  // Remove related logs
+  data.logs = data.logs.filter(l => l.category !== k);
+  data.todayPlan = data.todayPlan.filter(p => p.cat !== k);
+  save(data); renderCustom();
+}
+
+// Show inline bottom-sheet modal to add a topic to any section
+function showAddTopicModal(catKey) {
+  const cats = allCats();
+  const cat = cats[catKey];
+  el("modal-title").innerHTML = `<span style="color:${cat.color}">${cat.icon} ${cat.label}</span> — Add Topic`;
+  el("modal-body").innerHTML = `
+    <input id="new-topic-input" placeholder="e.g. Segment Trees, Async/Await, BERT..." style="margin-bottom:14px"/>
+    <div style="font-size:11px;color:#555;margin-bottom:14px">This topic will appear in the ${cat.label} section and can be planned, logged, and tracked.</div>
+    <button class="btn bw" style="width:100%" onclick="confirmAddTopic('${catKey}')">+ Add Topic</button>
+  `;
+  el("modal-bg").classList.add("open");
+  setTimeout(()=>{ const inp=el("new-topic-input"); if(inp) inp.focus(); }, 200);
+}
+
+function confirmAddTopic(catKey) {
+  const inp = el("new-topic-input");
+  const name = inp?.value?.trim();
+  if(!name) { showToast("Enter a topic name"); return; }
+  if(!data.extraTopics) data.extraTopics = {};
+  if(!data.extraTopics[catKey]) data.extraTopics[catKey] = [];
+  // Prevent duplicates
+  const cats = allCats();
+  if(cats[catKey]?.topics?.includes(name)) { showToast("Topic already exists!"); return; }
+  data.extraTopics[catKey].push(name);
+  save(data);
+  closeAllModals();
+  showToast(`"${name}" added to ${allCats()[catKey]?.label}! ✅`);
+  render();
+}
+
+function deleteExtraTopic(catKey, topic) {
+  if(!data.extraTopics?.[catKey]) return;
+  data.extraTopics[catKey] = data.extraTopics[catKey].filter(t=>t!==topic);
+  // Also remove from plan and topicStatus
+  const k = `${catKey}::${topic}`;
+  delete data.topicStatus[k];
+  data.todayPlan = data.todayPlan.filter(p=>p.key!==k);
+  save(data); render();
+  showToast("Topic removed");
+}
+
+function addTopicToCustom(catKey) {
+  showAddTopicModal(catKey);
+}
+
+// ─── JOBS ─────────────────────────────────────────────────────────────
+function renderJobs() {
+  el("job-total").textContent = data.jobLogs.length;
+  el("job-week").textContent = data.jobLogs.filter(j=>{const d=new Date(j.date),n=new Date();return(n-d)<7*86400000;}).length;
+  el("job-list").innerHTML = data.jobLogs.length===0 ? `<p style="color:#333;font-size:13px">No applications yet.</p>`
+    : data.jobLogs.map(j=>`<div class="li">
+        <div>
+          <div style="font-weight:700;font-size:14px">${j.company}</div>
+          <div style="font-size:12px;color:#555;margin-top:2px">${j.role}</div>
+          ${j.link?`<a href="${j.link}" target="_blank" style="font-size:11px;color:#38bdf8">↗ Link</a>`:""}
+        </div>
+        <div style="text-align:right">
+          <span style="padding:2px 9px;border-radius:4px;font-size:10px;font-weight:700;font-family:var(--mono);background:${(SC[j.status]||"#888")}20;color:${SC[j.status]||"#888"}">${j.status}</span>
+          <div style="font-size:11px;color:#444;margin-top:4px">${j.date}</div>
+        </div>
+      </div>`).join("");
+}
+
+// ─── GROW ─────────────────────────────────────────────────────────────
+function renderGrow(cats) {
+  // Calculate per-category % done and mins
+  const catStats = Object.entries(cats).filter(([k])=>k!=="jobs").map(([k,cat])=>{
+    const total = cat.topics.length;
+    const done = total>0 ? cat.topics.filter(t=>data.topicStatus[`${k}::${t}`]).length : 0;
+    const mins = data.logs.filter(l=>l.category===k).reduce((a,b)=>a+(b.duration||0),0);
+    const pct = total>0 ? Math.round((done/total)*100) : 0;
+    return {k, cat, total, done, mins, pct};
+  }).sort((a,b)=>a.pct-b.pct); // weakest first
+
+  el("grow-content").innerHTML = catStats.map(s=>{
+    const status = s.pct < 20 ? {label:"🔴 Needs urgent attention",color:"#ef4444"} :
+                   s.pct < 50 ? {label:"🟡 Work in progress",color:"#f59e0b"} :
+                   s.pct < 80 ? {label:"🟢 Good progress",color:"#34d399"} :
+                                 {label:"⭐ Almost mastered!",color:"#a78bfa"};
+    return `<div class="grow-card" style="background:${s.cat.color}08;border-color:${s.cat.color}40">
+      <div class="rbb" style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:18px">${s.cat.icon}</span>
+          <div>
+            <div style="font-weight:800;font-size:14px;color:${s.cat.color}">${s.cat.label}</div>
+            <div style="font-size:11px;color:${status.color}">${status.label}</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${s.cat.color}">${s.pct}%</div>
+          <div style="font-size:10px;color:#555">${s.done}/${s.total} topics</div>
+        </div>
+      </div>
+      <div class="track"><div class="fill" style="width:${s.pct}%;background:${s.cat.color};box-shadow:0 0 8px ${s.cat.color}60"></div></div>
+      <div style="margin-top:8px;font-size:11px;color:#555">${s.mins} mins studied total</div>
+      ${s.pct<50 ? `<div style="margin-top:8px;padding:8px 12px;background:#111;border-radius:8px;font-size:12px;color:#888">
+        💡 Focus areas: ${s.cat.topics.filter(t=>!data.topicStatus[`${s.k}::${t}`]).slice(0,3).join(", ")}
+      </div>` : ""}
+    </div>`;
+  }).join("");
+
+  // Streak
+  let streak = 0;
+  const d = new Date();
+  for(let i=0;i<365;i++) {
+    const ds = new Date(d); ds.setDate(d.getDate()-i);
+    const dstr = ds.toISOString().slice(0,10);
+    const mins = data.logs.filter(l=>l.date===dstr).reduce((a,b)=>a+(b.duration||0),0);
+    if(mins >= TARGET) streak++;
+    else if(i>0) break;
+  }
+  el("streak-content").innerHTML = `<div style="display:flex;align-items:center;gap:16px">
+    <div class="streak-fire">${streak>=7?"🔥":"💧"}</div>
+    <div>
+      <div style="font-family:var(--mono);font-size:32px;font-weight:700;color:${streak>=7?"#f97316":"#38bdf8"}">${streak} days</div>
+      <div style="font-size:12px;color:#555">${streak===0?"Start your streak today!":streak>=7?"You're on fire! Keep going!":"Building momentum..."}</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:4px;flex-wrap:wrap">
+    ${Array.from({length:14},(_,i)=>{
+      const dd=new Date(); dd.setDate(dd.getDate()-13+i);
+      const ds=dd.toISOString().slice(0,10);
+      const mins=data.logs.filter(l=>l.date===ds).reduce((a,b)=>a+(b.duration||0),0);
+      const active=mins>=TARGET;
+      return `<div style="width:24px;height:24px;border-radius:5px;background:${active?"#f97316":"#1a1a1a"};${active?`box-shadow:0 0 6px #f9731680`:""};" title="${ds}: ${mins}m"></div>`;
+    }).join("")}
+  </div>`;
+
+  // Weak areas
+  const allTopics = Object.entries(cats).filter(([k])=>k!=="jobs").flatMap(([k,cat])=>
+    cat.topics.filter(t=>!data.topicStatus[`${k}::${t}`]).map(t=>({cat:k,topic:t,color:cat.color,icon:cat.icon,label:cat.label,mins:data.logs.filter(l=>l.category===k&&l.topic===t).reduce((a,b)=>a+(b.duration||0),0)}))
+  ).sort((a,b)=>a.mins-b.mins).slice(0,8);
+
+  el("weak-areas").innerHTML = allTopics.length===0
+    ? `<p style="color:#34d399;font-size:13px">🎉 All topics completed!</p>`
+    : allTopics.map(t=>`<div class="li">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span style="font-size:16px">${t.icon}</span>
+          <div>
+            <div style="font-size:13px;font-weight:600">${t.topic}</div>
+            <div style="font-size:11px;color:#555">${t.label}</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:12px;color:${t.color}">${t.mins}m</div>
+          <div style="font-size:10px;color:#444">studied</div>
+        </div>
+      </div>`).join("");
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────
+function renderHistory(cats) {
+  el("hist-cats").innerHTML = Object.entries(cats).filter(([k])=>k!=="jobs").map(([k,cat])=>{
+    const catLogs = data.logs.filter(l=>l.category===k);
+    const mins = catLogs.reduce((a,b)=>a+(b.duration||0),0);
+    const done = cat.topics.filter(t=>data.topicStatus[`${k}::${t}`]).length;
+    const id = `hb-${k}`;
+    setTimeout(()=>{const c=el(id);if(c)renderBarsEl(c,catLogs,cat.color);},0);
+    return `<div class="card" style="margin:0">
+      <div class="rbb" style="margin-bottom:12px">
+        <div>
+          <div style="font-weight:800;font-size:13px;color:${cat.color}">${cat.icon} ${cat.label}</div>
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;margin-top:3px">${mins}m</div>
+          <div style="font-size:11px;color:#444">${catLogs.length} sessions · ${done}/${cat.topics.length}</div>
+        </div>
+        ${donutHTML(done,cat.topics.length||1,cat.color,54)}
+      </div>
+      <div class="bars" id="${id}"></div>
+    </div>`;
+  }).join("");
+
+  el("all-logs").innerHTML = data.logs.length===0 ? `<p style="color:#333;font-size:13px">No logs yet.</p>`
+    : data.logs.map(l=>`<div class="li">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span class="tag" style="background:${cats[l.category]?.color||"#888"}18;color:${cats[l.category]?.color||"#888"}">${cats[l.category]?.label||l.category}</span>
+          <div><div style="font-size:13px;font-weight:600">${l.topic}</div>${l.notes?`<div style="font-size:11px;color:#555">${l.notes}</div>`:""}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:13px;color:${cats[l.category]?.color||"#888"}">${l.duration}m</div>
+          <div style="font-size:11px;color:#444">${l.date}</div>
+        </div>
+      </div>`).join("");
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────
+function addLog() {
+  const cat=el("log-cat").value, topic=el("log-topic").value, notes=el("log-notes").value, dur=Number(el("log-dur").value);
+  if(!topic) { showToast("Please select a topic"); return; }
+  data.logs.unshift({id:Date.now(),date:today(),category:cat,topic,notes,duration:dur});
+  save(data); el("log-notes").value=""; render(); showToast("Session logged! ✅");
+}
+
+function addJob() {
+  const company=el("job-company").value.trim(), role=el("job-role").value.trim();
+  if(!company||!role) { showToast("Company and Role required"); return; }
+  data.jobLogs.unshift({id:Date.now(),date:today(),company,role,link:el("job-link").value,status:el("job-status").value});
+  save(data); el("job-company").value=""; el("job-role").value=""; el("job-link").value="";
+  render(); showToast("Application logged! ✅");
+}
+
+function markTopic(cat, topic) {
+  const k=`${cat}::${topic}`; data.topicStatus[k]=!data.topicStatus[k]; save(data); render();
+}
+
+function addPlan(cat, topic) {
+  const k=`${cat}::${topic}`; if(data.todayPlan.find(p=>p.key===k)) return;
+  data.todayPlan.push({key:k,cat,topic,done:false}); save(data); render();
+}
+
+function togglePlan(k) {
+  data.todayPlan=data.todayPlan.map(p=>p.key===k?{...p,done:!p.done}:p); save(data); render();
+}
+
+function removePlan(k) {
+  data.todayPlan=data.todayPlan.filter(p=>p.key!==k); save(data); render();
+}
+
+function setPlanCat(cat) { planCat=cat; render(); }
+function clearPunishment() { data.missedMins=0; save(data); render(); }
+
+// ─── TIMER ────────────────────────────────────────────────────────────
+function timerToggle() {
+  if(!timerOn) {
+    timerOn=true;
+    timerInterval=setInterval(()=>{timerSecs++;updateTimerDisplay();},1000);
+    el("timer-btn").textContent="■ Stop & Save";
+    el("timer-btn").style.cssText="background:#ef4444;color:#fff";
+    el("timer-disp").classList.add("pulse");
+    el("timer-cat").disabled=true;
+    el("timer-reset").style.display="none";
+  } else {
+    clearInterval(timerInterval); timerOn=false;
+    if(timerSecs>10) {
+      const cat=el("timer-cat").value, mins=Math.ceil(timerSecs/60);
+      data.logs.unshift({id:Date.now(),date:today(),category:cat,topic:"Timer Session",notes:"",duration:mins});
+      save(data); showToast(`${mins}m session saved! ✅`);
+    }
+    timerSecs=0; updateTimerDisplay();
+    el("timer-btn").textContent="▶ Start";
+    el("timer-btn").style.cssText="background:#fff;color:#000";
+    el("timer-disp").classList.remove("pulse");
+    el("timer-disp").style.color="";
+    el("timer-disp").style.textShadow="";
+    el("timer-cat").disabled=false;
+    render();
+  }
+}
+
+function timerReset() { timerSecs=0; updateTimerDisplay(); el("timer-reset").style.display="none"; }
+
+function updateTimerDisplay() {
+  const d=el("timer-disp"); if(!d) return;
+  const cat=el("timer-cat")?.value||"dsa";
+  const cats=allCats(); const color=cats[cat]?.color||"#f0f0f0";
+  d.textContent=fmt(timerSecs);
+  if(timerOn){d.style.color=color;d.style.textShadow=`0 0 30px ${color}60`;}
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────
+function esc(s) { return s.replace(/'/g,"\\'").replace(/"/g,"&quot;"); }
+
+function showToast(msg) {
+  let t=el("toast");
+  if(!t){t=document.createElement("div");t.id="toast";t.style.cssText="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid #333;color:#f0f0f0;padding:10px 20px;border-radius:10px;font-size:13px;font-family:'Syne',sans-serif;z-index:9999;transition:opacity .3s";document.body.appendChild(t);}
+  t.textContent=msg; t.style.opacity="1";
+  clearTimeout(t._timer); t._timer=setTimeout(()=>t.style.opacity="0",2000);
+}
+
+function closeModal(e) { if(e.target===el("modal-bg")) closeAllModals(); }
+function closeAllModals() { el("modal-bg").classList.remove("open"); }
+
+// ─── PWA INSTALL ──────────────────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault(); deferredPrompt=e;
+  el("ib").classList.add("show");
+  el("ib-btn").onclick=async()=>{
+    el("ib").classList.remove("show");
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt=null;
+  };
+});
+
+// iOS tip
+if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream&&!window.matchMedia("(display-mode:standalone)").matches&&!window.navigator.standalone){
+  const ib=el("ib");
+  ib.innerHTML=`<span style="font-size:26px">📱</span><div class="ibt"><b>Add to Home Screen</b>Tap Share → "Add to Home Screen"</div><button onclick="this.parentElement.classList.remove('show')" style="background:none;border:none;color:#555;cursor:pointer;font-size:20px;padding:0 4px">×</button>`;
+  setTimeout(()=>ib.classList.add("show"),1500);
+}
+
+// ─── SERVICE WORKER (offline) ─────────────────────────────────────────
+if("serviceWorker" in navigator){
+  const sw=`const C="sd-v3";self.addEventListener("install",e=>{self.skipWaiting();});self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));});`;
+  const blob=new Blob([sw],{type:"text/javascript"});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+initNav();
+render();
+</script>
+</body>
+</html>
